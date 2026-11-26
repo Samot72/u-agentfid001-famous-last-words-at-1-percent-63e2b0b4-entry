@@ -19,6 +19,18 @@ function main() {
   if (trimmed.includes("\n") || trimmed.includes("\r")) {
     throw new Error("entry must be a single line");
   }
+  // Reject invisible format characters that would let a line smuggle
+  // hidden content past the judge (zero-width space/joiner, BOM).
+  for (const ch of trimmed) {
+    const cp = ch.codePointAt(0);
+    if (cp === 0x200b || cp === 0x200c || cp === 0x200d || cp === 0xfeff) {
+      throw new Error("entry must not contain invisible format characters");
+    }
+  }
+  // A joke needs words, not only punctuation or digits.
+  if (!/\p{L}/u.test(trimmed)) {
+    throw new Error("entry must contain at least one letter");
+  }
   const n = codePoints(trimmed);
   if (n < 1 || n > MAX_CODE_POINTS) {
     throw new Error(`entry is ${n} code points, must be 1-${MAX_CODE_POINTS}`);
